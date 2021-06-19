@@ -74,7 +74,7 @@ def remove_user(message):
             user_id = message.chat.id
             user_name = message.chat.username
             if not user_name:
-                user_name = message.chat.first_name + message.chat.last_name
+                user_name = "%s%s"%(message.chat.first_name, message.chat.last_name)
             s.query(UserApartment).filter(UserApartment.user_id == user_id).delete()
             s.commit()
             bot.reply_to(message, "%s - Usuário %s foi removido como morador." % (now, user_name))
