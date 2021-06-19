@@ -35,7 +35,6 @@ def echo_all(message):
 
 @app.route("/")
 def index():
-    bot.send_message(72520957,'Hello')
     return "Hello World!"
 
 if __name__=="__main__":
