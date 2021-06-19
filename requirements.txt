@@ -1,5 +1,7 @@
 wheel
 setuptools
+gunicorn
 flask
 python-dotenv
-pyTelegramBotAPI
+PyTelegramBotAPI
+sqlalchemy
