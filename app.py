@@ -48,7 +48,7 @@ def add_user(message):
             user_id = message.chat.id
             user_name = message.chat.username
             if not user_name:
-                user_name = message.chat.first_name + message.chat.last_name
+                user_name = "%s%s"%(message.chat.first_name, message.chat.last_name)
             apartment = int(menssagem[1])
             query = s.query(UserApartment).filter(UserApartment.user_id == user_id, UserApartment.apartment == apartment)
             if not query.all():
@@ -122,7 +122,7 @@ if __name__=="__main__":
     try:
         t1 = threading.Thread(target=bot_thread, args=())
         t1.start()
-        app.run(host="0.0.0.0", port=80)
+        app.run(host="0.0.0.0", port=8000)
         t1.join()
     except KeyboardInterrupt:
         if bot:
