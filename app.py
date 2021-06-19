@@ -5,6 +5,7 @@ import threading
 from flask import Flask
 from datetime import datetime
 from flask import Flask
+from flask_cors import CORS
 from dotenv import dotenv_values
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,6 +16,7 @@ config = {
     **os.environ,  # override loaded values with environment variables
 }
 app = Flask(__name__)
+cors = CORS(app)
 
 engine = create_engine(config["ENGINE"])
 session = sessionmaker()

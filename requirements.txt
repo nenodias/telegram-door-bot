@@ -2,6 +2,7 @@ wheel
 setuptools
 gunicorn
 flask
+flask-cors
 python-dotenv
 PyTelegramBotAPI
 sqlalchemy
