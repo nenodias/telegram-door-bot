@@ -1,11 +1,10 @@
 import os
 import pdb
-import telebot
 import threading
 from flask import Flask
-from datetime import datetime
-from flask import Flask
 from flask_cors import CORS
+from utils import get_now
+from bot import create_bot, init_bot
 from dotenv import dotenv_values
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -29,65 +28,10 @@ Criar o usuário utilizandoo @botFather
 Recebendo o token você pode validar o token e o bot chamando
 https://api.telegram.org/bot<TOKEN>/getMe
 '''
-print(config["TOKEN"])
-bot = telebot.TeleBot(config["TOKEN"], parse_mode=None)
-
-def get_now():
-    return datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-
-@bot.message_handler(commands=['add'])
-def add_user(message):
-    user_id = None
-    user_name = None
-    apartment = None
-    now = get_now()
-    with session() as s:
-        s.begin()
-        try:
-            menssagem = message.text.split()
-            user_id = message.chat.id
-            user_name = message.chat.username
-            if not user_name:
-                user_name = "%s%s"%(message.chat.first_name, message.chat.last_name)
-            apartment = int(menssagem[1])
-            query = s.query(UserApartment).filter(UserApartment.user_id == user_id, UserApartment.apartment == apartment)
-            if not query.all():
-                user = UserApartment(user_id = user_id, user_name = user_name, apartment = apartment)
-                s.add(user)
-                s.commit()
-            bot.reply_to(message, "%s - Usuário '%s' foi cadastrado como morador do apartamento '%s'" % (now, user_name, apartment))
-        except:
-            if not apartment:
-                apartment = "Vazio"
-            bot.reply_to(message, "%s - Erro ao cadastrar o usuario: '%s' no apartamento '%s'" % (now, user_name, apartment))
-            s.rollback()
-
-
-@bot.message_handler(commands=['remove'])
-def remove_user(message):
-    user_id = None
-    user_name = None
-    now = get_now()
-    with session() as s:
-        s.begin()
-        try:
-            user_id = message.chat.id
-            user_name = message.chat.username
-            if not user_name:
-                user_name = "%s%s"%(message.chat.first_name, message.chat.last_name)
-            s.query(UserApartment).filter(UserApartment.user_id == user_id).delete()
-            s.commit()
-            bot.reply_to(message, "%s - Usuário %s foi removido como morador." % (now, user_name))
-        except:
-            bot.reply_to(message, "%s - Erro ao remover o usuario: '%s'." % (now, user_name))
-
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-    now = get_now()
-    bot.reply_to(message, "%s - Olá para se cadastrar como um morador use /add <número do apartamento>, para se descadastrar de TODOS os apartamentos use /remove" %(now))
 
 @app.route("/door/<int:apartment>")
 def door(apartment):
+    bot = create_bot(config["TOKEN"]) 
     with session() as s:
         s.begin()
         try:
@@ -102,6 +46,7 @@ def door(apartment):
 
 @app.route("/door/<int:apartment>/<person>")
 def door_person(apartment, person):
+    bot = create_bot(config["TOKEN"])
     with session() as s:
         s.begin()
         try:
@@ -115,8 +60,13 @@ def door_person(apartment, person):
     return "Erro ao avisar moradores!"
 
 def bot_thread():
-    global bot
-    bot.polling()
+    while True:
+        try:
+            bot = create_bot(config["TOKEN"])
+            init_bot(bot, session, UserApartment)
+            bot.polling()
+        except Exception as ex:
+            print("Exception: %s"%(ex))
 
 if __name__=="__main__":
     try:
@@ -125,7 +75,7 @@ if __name__=="__main__":
         app.run(host="0.0.0.0", port=8000)
         t1.join()
     except KeyboardInterrupt:
-        if bot:
-            bot.stop_polling()
         print("Bye bye")
+    except Exception as ex:
+        print(ex)
 
